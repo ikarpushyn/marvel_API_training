@@ -6,7 +6,7 @@ import ErrorBoundary from '../errorBoundary/ErrorBoundary';
 import PropTypes from 'prop-types';
 
 import decoration from '../../resources/img/vision.png';
-import { Component } from 'react';
+import { Component }  from 'react';
 
 class App extends Component {
 	state = {
