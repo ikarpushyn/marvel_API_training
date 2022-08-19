@@ -1,33 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
-import React from 'react';
 import PropTypes from 'prop-types';
 
-import MarvelService from '../../services/MarvelService';
-import ErrorMessage from '../errorMessage/ErrorMessage';
 import Spinner from '../spinner/Spinner';
+import ErrorMessage from '../errorMessage/ErrorMessage';
+import useMarvelService from '../../services/MarvelService';
 import './charList.scss';
 
 const CharList = (props) => {
 	const [charList, setCharList] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(false);
 	const [newItemLoading, setNewItemLoading] = useState(false);
 	const [offset, setOffset] = useState(210);
 	const [charEnded, setCharEnded] = useState(false);
 
-	const marvelService = new MarvelService();
+	const { loading, error, getAllCharacters } = useMarvelService();
 
 	useEffect(() => {
-		onRequest();
+		onRequest(offset, true);
 	}, []);
 
-	const onRequest = (offset) => {
-		onCharListLoading();
-		marvelService.getAllCharacters(offset).then(onCharListLoaded).catch(onError);
-	};
-
-	const onCharListLoading = () => {
-		setNewItemLoading(true);
+	const onRequest = (offset, initial) => {
+		initial ? setNewItemLoading(false) : setNewItemLoading(true);
+		getAllCharacters(offset).then(onCharListLoaded);
 	};
 
 	const onCharListLoaded = (newCharList) => {
@@ -37,15 +30,9 @@ const CharList = (props) => {
 		}
 
 		setCharList((charList) => [...charList, ...newCharList]);
-		setLoading((loading) => false);
 		setNewItemLoading((newItemLoading) => false);
 		setOffset((offset) => offset + 9);
 		setCharEnded((charEnded) => ended);
-	};
-
-	const onError = () => {
-		setLoading(false);
-		setError((loading) => false);
 	};
 
 	const itemRefs = useRef([]);
@@ -55,8 +42,6 @@ const CharList = (props) => {
 		itemRefs.current[id].classList.add('char__item_selected');
 		itemRefs.current[id].focus();
 	};
-
-	// handleBoxToggle = () => this.setState({ showBox: !this.state.showBox });
 
 	function renderItems(arr) {
 		const items = arr.map((item, i) => {
@@ -73,7 +58,7 @@ const CharList = (props) => {
 					className="char__item"
 					tabIndex={0}
 					ref={(el) => (itemRefs.current[i] = el)}
-					key={item.id}
+					key={i}
 					onClick={() => {
 						props.onCharSelected(item.id);
 						focusOnItem(i);
@@ -90,20 +75,23 @@ const CharList = (props) => {
 				</li>
 			);
 		});
+
 		return <ul className="char__grid">{items}</ul>;
 	}
 
 	const items = renderItems(charList);
 
 	const errorMessage = error ? <ErrorMessage /> : null;
-	const spinner = loading ? <Spinner /> : null;
-	const content = !(loading || error) ? items : null;
+	const spinner = loading && !newItemLoading ? <Spinner /> : null;
+
+	// const content = !(loading || error) ? items : null;
 
 	return (
 		<div className="char__list">
 			{errorMessage}
 			{spinner}
-			{content}
+			{items}
+			{/* {content} */}
 
 			<button
 				className="button button__main button__long"
